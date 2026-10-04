@@ -1,0 +1,4 @@
+import { Container } from "../ui/Container";
+import { Reveal } from "../ui/Reveal";
+const STEPS = [{ n: "01", title: "Fundamental Economic Laws" }, { n: "02", title: "Matters & Disputes" }, { n: "03", title: "Adjudications" }, { n: "04", title: "Special Court — PMLA Component" }];
+export function DisputeJourney() { return <section className="bg-vls-near-black py-14 md:py-20"><Container className="max-w-2xl"><Reveal><h2 className="font-serif text-[30px] font-medium leading-tight text-white md:text-[36px]">A Programme Learning Journey.</h2></Reveal><div className="mt-10">{STEPS.map((step, i) => <Reveal key={step.n} delayMs={i * 80}><div className="flex gap-5 border-t border-white/10 py-6 first:border-t-0"><span className="font-serif text-[20px] font-medium text-vls-gold">{step.n}</span><p className="text-[17px] font-semibold text-white">{step.title}</p></div></Reveal>)}</div></Container></section>; }

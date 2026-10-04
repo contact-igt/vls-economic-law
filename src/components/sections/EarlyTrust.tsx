@@ -1,0 +1,10 @@
+import Image from "next/image";
+import { Container } from "../ui/Container";
+import { Reveal } from "../ui/Reveal";
+import { Eyebrow } from "../ui/Eyebrow";
+import { SecondaryLink } from "../ui/Button";
+
+const TRUST_ROW = ["PMLA", "BENAMI", "FEMA", "COFEPOSA", "PROCEDURE & PRACTICE"];
+const PHOTOS = [{ src: "/assets/vls/classroom/classroom-faculty-pointing.jpg", alt: "Dr. Sivakumar leading a VLS Law Academy class", w: 1500, h: 1125, priority: false }, { src: "/assets/vls/classroom/classroom-students-notes.jpg", alt: "VLS Law Academy students engaged and taking notes in class", w: 2568, h: 1444, priority: false }];
+
+export function EarlyTrust() { return <section className="bg-white py-16 md:py-20"><Container><Reveal className="max-w-2xl"><Eyebrow>Practical Legal Training</Eyebrow><h2 className="mt-3 font-serif text-[28px] font-medium leading-tight text-vls-black md:text-[34px]">Learn Economic Laws Beyond the Bare Act.</h2><p className="mt-4 text-[16px] leading-relaxed text-vls-muted">The programme brings together the fundamental economic laws identified in Module 11 with the matters, disputes and adjudication-related areas expressly included by VLS.</p><p className="mt-3 text-[16px] leading-relaxed text-vls-muted">At VLS Law Academy, the focus is on connecting legal concepts with the way advocates encounter them in practice.</p><ul className="mt-6 flex flex-wrap items-center divide-x divide-vls-border border-y border-vls-border py-3">{TRUST_ROW.map((label) => <li key={label} className="px-5 py-1 text-[12px] font-bold uppercase tracking-[1.2px] text-vls-black first:pl-0 last:pr-0">{label}</li>)}</ul></Reveal><div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">{PHOTOS.map((photo, i) => <Reveal key={photo.src} delayMs={i * 90}><div className="aspect-[4/3] overflow-hidden"><Image src={photo.src} alt={photo.alt} width={photo.w} height={photo.h} className="img-zoom h-full w-full object-cover" sizes="(min-width: 640px) 50vw, 100vw" priority={photo.priority} /></div></Reveal>)}</div><div className="mt-8"><SecondaryLink href="#curriculum">Explore What You&apos;ll Learn ↓</SecondaryLink></div></Container></section>; }
