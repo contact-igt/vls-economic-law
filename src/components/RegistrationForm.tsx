@@ -8,7 +8,7 @@ import { Popup } from "./ui/Popup";
 import { PaymentTrust } from "./PaymentTrust";
 import { useCourse } from "@/components/CourseProvider";
 import { UTM_KEYS, getUtm } from "@/lib/getUtm";
-import { clearDraft, readDraft, saveDraft, saveProof } from "@/lib/paymentStorage";
+import { clearDraft, readDraft, saveDraft, saveProof, saveWaitlist } from "@/lib/paymentStorage";
 import { setCheckoutOpen } from "@/lib/checkoutState";
 import { resolveCtaSource } from "@/lib/ctaSource";
 
@@ -54,6 +54,9 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
   const [verifying, setVerifying] = useState(false);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
+  // Validated details waiting on the payment-instruction popup; payment starts only after "I understand and agree".
+  const [pending, setPending] = useState<FormValues | null>(null);
+  const [agree, setAgree] = useState(false);
   // Synchronous guard: state updates are async, so rapid taps could otherwise create several orders.
   const locked = useRef(false);
 
@@ -70,7 +73,7 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
       if (!response.ok) {
         setFormError(
           response.status === 403
-            ? "Registration for this session is closed."
+            ? "Registration for this session has closed. Refresh the page to join the waitlist."
             : typeof data?.error === "string" ? data.error : "Payment could not be started. Please try again.",
         );
         return null;
@@ -99,16 +102,44 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
     }
   }
 
+  // Registration closed: no order, no checkout. The server records the waitlist lead.
+  async function joinWaitlist(values: FormValues) {
+    setFormError("");
+    saveDraft(values);
+    const utm = Object.fromEntries(UTM_KEYS.map((key) => [key, getUtm(key)]));
+    try {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, ...utm, cta_source: resolveCtaSource(formId) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data?.status === "waitlist") {
+        saveWaitlist({ name: values.name, courseName: course.name });
+        clearDraft();
+        router.push("/thank-you");
+        return;
+      }
+      setFormError(typeof data?.error === "string" ? data.error : "We couldn't add you to the waitlist. Please try again.");
+    } catch {
+      setFormError("We couldn't add you to the waitlist. Check your connection and try again.");
+    }
+    setCreating(false);
+    locked.current = false;
+  }
+
   async function startPayment(values: FormValues) {
     setFormError("");
     setNotice(null);
     setCreating(true);
     setCheckoutOpen(true);
     saveDraft(values);
-    const order = await createOrder(values);
+    // Check the checkout script BEFORE creating an order, so a blocked script never leaves an unused order.
+    const order = window.Razorpay ? await createOrder(values) : null;
     setCreating(false);
-    if (!order || !window.Razorpay) {
-      if (order) setFormError("Payment gateway did not load. Please refresh and try again.");
+    if (!order || !order.orderId || !order.keyId || !window.Razorpay) {
+      if (!window.Razorpay) setFormError("Payment gateway did not load. Please disable any blocker, refresh and try again.");
+      else if (order) setFormError("Payment could not be started. Please try again.");
       setCheckoutOpen(false);
       locked.current = false;
       return;
@@ -141,15 +172,16 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
     validationSchema,
     onSubmit: async (values) => {
       if (locked.current) return;
-      locked.current = true;
-      setCreating(true);
-      if (!course.isPaid) {
-        locked.current = false;
-        setCreating(false);
-        setFormError("Registration for this session is closed.");
+      const cleaned = { ...values, name: values.name.trim(), email: values.email.trim().toLowerCase() };
+      if (course.isWaitlist) {
+        // Waitlist mode skips the payment instructions and Razorpay entirely.
+        locked.current = true;
+        setCreating(true);
+        await joinWaitlist(cleaned);
         return;
       }
-      await startPayment({ ...values, name: values.name.trim(), email: values.email.trim().toLowerCase() });
+      setAgree(false);
+      setPending(cleaned);
     },
   });
 
@@ -164,7 +196,7 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
   const label = verifying
     ? "Confirming Payment…"
     : busy
-    ? "Opening Secure Payment…"
+    ? course.isWaitlist ? "Joining Waitlist…" : "Opening Secure Payment…"
     : notice && course.isPaid ? `Try Payment Again — ${course.feeText}` : submitLabel || course.formSubmitLabel;
 
   return (
@@ -243,14 +275,47 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
         </div>
         <button
           type="submit"
-          disabled={busy || !course.isPaid}
+          disabled={busy}
           aria-busy={busy}
           className="mt-2 min-h-[52px] w-full bg-vls-red px-4 text-[14px] font-bold text-vls-white transition-[background-color,transform] duration-150 ease-out hover:bg-vls-red-dark motion-safe:hover:-translate-y-px active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
           {label}
         </button>
         <PaymentTrust />
+        {course.isWaitlist && <p className="text-center text-[12px] leading-relaxed text-vls-muted">{course.waitlistNote}</p>}
       </form>
+
+      <Popup open={pending !== null} onClose={() => setPending(null)}>
+        <h3 className="font-serif text-[20px] font-medium text-vls-black">Before you pay</h3>
+        <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[14px] leading-relaxed text-vls-muted">
+          <li>After payment, wait until you are taken to the confirmation page.</li>
+          <li>Do not close or refresh this page while the payment is in progress.</li>
+          <li>If the page is closed early, your registration may not be confirmed on screen.</li>
+        </ul>
+        <label className="mt-4 flex items-center gap-2.5 text-[14px] font-semibold text-vls-black">
+          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="h-4 w-4 accent-[var(--vls-red)]" />
+          I understand and agree.
+        </label>
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            disabled={!agree}
+            onClick={() => {
+              if (!pending || locked.current) return;
+              locked.current = true;
+              const values = pending;
+              setPending(null);
+              void startPayment(values);
+            }}
+            className="min-h-[48px] flex-1 bg-vls-red px-4 text-[14px] font-bold text-vls-white transition-colors hover:bg-vls-red-dark disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            I Agree &amp; Pay {course.feeText}
+          </button>
+          <button type="button" onClick={() => setPending(null)} className="min-h-[48px] border border-vls-border px-4 text-[14px] font-bold text-vls-black hover:bg-vls-card">
+            Cancel
+          </button>
+        </div>
+      </Popup>
 
       <Popup open={verifying} onClose={() => {}} dismissable={false}>
         <h3 className="font-serif text-[20px] font-medium text-vls-black">Confirming your payment…</h3>

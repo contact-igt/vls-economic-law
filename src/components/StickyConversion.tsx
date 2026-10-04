@@ -40,7 +40,6 @@ export function StickyConversion() {
   const nearTarget = useHiddenNear(WATCH_IDS);
   const editing = useEditing();
   const checkoutOpen = useCheckoutOpen();
-  if (!course.isPaid) return null;
   const hidden = nearTarget || editing || checkoutOpen;
 
   return (

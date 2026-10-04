@@ -25,8 +25,6 @@ Names only — see [`.env.example`](.env.example). All of these are **server-sid
 | `RAZORPAY_KEY_ID` | Razorpay key id (returned to the browser by `/api/create-order`) |
 | `RAZORPAY_KEY_SECRET` | Razorpay key secret — signature and capture verification |
 | `RAZORPAY_WEBHOOK_SECRET` | Razorpay webhook signing secret |
-| `GOOGLE_SHEET_WEBAPP_URL` | Registration sheet web app (`scripts/google-sheet-webapp.gs`) |
-| `GOOGLE_SHEET_TOKEN` | Optional shared secret matching the sheet script's `TOKEN` property |
 | `NEXT_PUBLIC_API_SERVER`, `NEXT_PUBLIC_*_API_URL`, `NEXT_PUBLIC_CLIENT_KEY` | Optional lead-backend forwarding (server-side only) |
 
 ## Payment flow
@@ -38,7 +36,7 @@ Names only — see [`.env.example`](.env.example). All of these are **server-sid
 | Webhook | `POST /api/razorpay-webhook` | `payment.captured` / `order.paid`, HMAC-verified and idempotent per payment id. |
 
 Configure the Razorpay webhook to `https://<your-domain>/api/razorpay-webhook`.
-The registration sheet upserts on `razorpay_payment_id`, so retries never create duplicate rows.
+The registration Google Sheet web app URL is the `GOOGLE_SHEET_WEBAPP_URL` constant in `src/lib/registrations.ts` (server-only). The sheet upserts on `razorpay_payment_id`, so retries never create duplicate rows.
 
 ## Build and verify
 

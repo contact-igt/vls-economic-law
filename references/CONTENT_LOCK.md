@@ -28,7 +28,7 @@ No material from Modules 1-10 or Module 12, external legal research, statutory p
 
 ## Commercial state
 
-Programme identifier: `economic-laws-practice`. Paid registration is **OPEN**: Saturday, 10 October 2026, 6:00 PM – 9:00 PM IST, 3 Hours, fee ₹499. Registration closes at the class start (2026-10-10T18:00:00+05:30), enforced in the UI and in `/api/create-order`. There is no waitlist. The order amount is derived server-side from `programConfig.fee`; the browser never supplies it. Seat scarcity may only be shown from a real `seatCap` and a verified paid count (`seatCap` is `null`). All mutable commercial copy remains in `src/lib/course.ts`.
+Programme identifier: `economic-laws-practice`. Paid registration is **OPEN**: Saturday, 10 October 2026, 6:00 PM – 9:00 PM IST, 3 Hours, fee ₹499. Paid registration closes at `registrationEndsAt` (2026-10-10T18:00:00+05:30, the class start), decided only by `isRegistrationOpen` / `getRegistrationAction` in `src/lib/programStatus.ts` and enforced in the UI and in `/api/create-order`. After it every CTA reads **Join Waitlist**: no Razorpay order is created, and `/api/waitlist` records the lead to the same sheet/backend with `payment_status: "waitlist"`, `amount` 0 and empty payment fields. The order amount is derived server-side from `programConfig.fee`; the browser never supplies it. Seat scarcity may only be shown from a real `seatCap` and a verified paid count (`seatCap` is `null`). All mutable commercial copy remains in `src/lib/course.ts`.
 
 ## Media and institutional content
 

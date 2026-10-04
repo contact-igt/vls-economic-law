@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { getCourse, programConfig } from "@/lib/course";
+import { registrationDeadline } from "@/lib/programStatus";
 import { useUtmSource } from "@/lib/useUtmSource";
 
 const CourseContext = createContext<ReturnType<typeof getCourse> | null>(null);
@@ -19,9 +20,11 @@ export function CourseProvider({
 
   useEffect(() => {
     const refresh = () => setNow(Date.now());
-    const remaining = Date.parse(programConfig.classStartAt) - Date.now();
+    // Flip to waitlist mode exactly at the registration deadline (shared helper, same as the API guard).
+    const deadline = registrationDeadline(programConfig);
+    const remaining = deadline - Date.now();
     // Recheck long delays daily to avoid browser timeout overflow.
-    const timer = now < Date.parse(programConfig.classStartAt)
+    const timer = now < deadline
       ? window.setTimeout(refresh, Math.max(0, Math.min(remaining, 86_400_000)))
       : undefined;
     window.addEventListener("focus", refresh);

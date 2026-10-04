@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       console.error("verify-payment rejected:", paymentId, confirmation.reason);
       return NextResponse.json({ error: "Payment could not be verified" }, { status: 400 });
     }
-    const { registration } = confirmation;
+    const registration = { ...confirmation.registration, signature };
     try {
       await recordPaidRegistration(registration);
     } catch (error) {

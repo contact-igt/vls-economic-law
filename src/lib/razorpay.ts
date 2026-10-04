@@ -17,11 +17,17 @@ export type PaidRegistration = StudentDetails & {
   programmeId: string; courseName: string; orderId: string; paymentId: string;
   amount: number; currency: string; paymentStatus: "paid"; paymentMethod: string;
   createdAt: string; paidAt: string;
+  /** Checkout signature, present when recorded from the verified Thank You flow (the webhook has none). */
+  signature?: string;
 };
 
-/** Key secret is read from a server-only variable. NEXT_PUBLIC_* values are bundled into the browser and are never used. */
+/**
+ * Key secret is read ONLY from a server-only variable. The key id is public by design, so the legacy
+ * NEXT_PUBLIC_RAZORPAY_KEY_ID name is accepted as a fallback for older VLS deployments.
+ */
 export function credentials() {
-  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  // const keyId = "rzp_test_Ss2NFtpJFLRAiw";
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
   return keyId && keySecret ? { keyId, keySecret } : null;
 }

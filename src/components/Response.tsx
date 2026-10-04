@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Container } from "./ui/Container";
 import { useCourse } from "@/components/CourseProvider";
-import { readProof } from "@/lib/paymentStorage";
+import { readProof, readWaitlist, type WaitlistConfirmation } from "@/lib/paymentStorage";
 import { trackVerifiedPurchase } from "@/lib/tracking";
 import { googleCalendarUrl, icsContent } from "@/lib/calendar";
 
@@ -18,6 +18,7 @@ type Phase =
   | { kind: "loading" }
   | { kind: "paid"; data: Verified }
   | { kind: "pending" }
+  | { kind: "waitlist"; data: WaitlistConfirmation }
   | { kind: "unverified"; hasProof: boolean };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,6 +32,12 @@ function useVerification() {
   useEffect(() => {
     let active = true;
     (async () => {
+      // A waitlist join (registration closed) has no payment to verify; a later payment attempt clears it.
+      const waitlist = readWaitlist();
+      if (waitlist) {
+        if (active) setPhase({ kind: "waitlist", data: waitlist });
+        return;
+      }
       const proof = readProof();
       if (!proof) {
         if (active) setPhase({ kind: "unverified", hasProof: false });
@@ -75,6 +82,22 @@ export function Response({ variant, reason = "failed" }: { variant: "thank-you" 
   return variant === "thank-you" ? <ThankYou /> : <PaymentProblem reason={reason} />;
 }
 
+function WaitlistJoined({ data }: { data: WaitlistConfirmation }) {
+  const course = useCourse();
+  return (
+    <Shell>
+      <p className="eyebrow">Waitlist Confirmed</p>
+      <h1 className="mt-3 font-serif text-[28px] font-medium leading-tight text-vls-black md:text-[34px]">You&apos;re on the waitlist.</h1>
+      <p className="mx-auto mt-4 max-w-md text-[16px] leading-relaxed text-vls-muted">
+        Thank you{data.name ? `, ${data.name}` : ""}. Registration for the {data.courseName} session on {course.fullDate} has closed, and you have been added to the waitlist. VLS Law Academy will contact you through your registered details when the next session opens.
+      </p>
+      <p className="mx-auto mt-3 max-w-md text-[14px] text-vls-muted">No payment has been taken.</p>
+      <Help course={course} />
+      <div className="mt-8 flex justify-center"><HomeLink /></div>
+    </Shell>
+  );
+}
+
 function ThankYou() {
   const course = useCourse();
   const { phase, recheck } = useVerification();
@@ -86,10 +109,11 @@ function ThankYou() {
   }, [paidData]);
 
   if (phase.kind === "paid") return <Confirmed data={phase.data} />;
+  if (phase.kind === "waitlist") return <WaitlistJoined data={phase.data} />;
 
   const copy =
     phase.kind === "loading"
-      ? { title: "Confirming your payment…", body: "Please wait while we verify your payment with Razorpay." }
+      ? { title: "Confirming your registration…", body: "Please wait a moment while we confirm your details." }
       : phase.kind === "pending"
         ? { title: "We're still confirming your payment", body: "Confirmation is taking a little longer than usual. Please don't pay again — check the status in a moment." }
         : { title: "We couldn't verify this payment yet", body: "If you completed payment, please wait a moment and try again." };

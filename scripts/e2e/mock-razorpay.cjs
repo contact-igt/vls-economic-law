@@ -44,7 +44,7 @@ globalThis.fetch = async (input, init = {}) => {
     }
     return json({ error: "not found" }, 404);
   }
-  if (url === process.env.GOOGLE_SHEET_WEBAPP_URL) {
+  if (url.startsWith("https://script.google.com/macros/")) {
     const params = Object.fromEntries(new URLSearchParams(init.body));
     const seen = LOG && fs.existsSync(LOG) && fs.readFileSync(LOG, "utf8").split("\n").some((line) => line && JSON.parse(line).razorpay_payment_id === params.razorpay_payment_id);
     if (LOG) fs.appendFileSync(LOG, JSON.stringify(params) + "\n");

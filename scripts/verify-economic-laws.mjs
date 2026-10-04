@@ -76,7 +76,7 @@ for (const phrase of [
 }
 assert.match(hero, /<h1[\s>]/, "hero lock: exactly one H1 is provided by the hero");
 assertIncludes(course, 'pageName: "economic-laws-practice"', "commercial configuration");
-// Launch offer: ₹499, registration open, no waitlist.
+// Launch offer: ₹499, paid registration open until registrationEndsAt, then waitlist.
 assertIncludes(course, "fee: 499", "commercial configuration");
 assertIncludes(course, 'sessionStatus: "announced"', "commercial configuration");
 assertIncludes(course, "seatCap: null", "no invented seat cap");
@@ -103,8 +103,18 @@ assert.equal(
 assertIncludes(course, 'ctaLabel = paid ? `Register Now — ${feeText}`', "paid CTA");
 assertIncludes(course, 'compactCtaLabel: paid ? "Register Now"', "paid CTA");
 assertIncludes(course, 'stickyCtaLabel: paid ? "Register Now"', "paid CTA");
+// After the deadline every CTA becomes Join Waitlist and leads go to /api/waitlist (no Razorpay order).
+assertIncludes(course, 'registrationEndsAt: "2026-10-10T18:00:00+05:30"', "registration deadline");
+assertIncludes(course, ': "Join Waitlist";', "waitlist CTA");
+assertIncludes(form, '"/api/waitlist"', "waitlist submission");
+assertIncludes(form, "saveWaitlist(", "waitlist confirmation handed to the Thank You page");
+const waitlistRoute = await source("src/app/api/waitlist/route.ts");
+assertIncludes(waitlistRoute, 'getRegistrationAction(programConfig) === "payment"', "waitlist route only accepts leads once paid registration is closed");
+assertExcludes(waitlistRoute, "createOrder", "waitlist never creates a Razorpay order");
+assertIncludes(registrations, 'payment_status: "waitlist"', "waitlist leads are segmented");
+assertIncludes(responseSource, "You&apos;re on the waitlist.", "waitlist Thank You headline");
 for (const stale of [
-  "waitlist", "Waitlist", "Join the Waitlist", "notify you", "We'll notify",
+  "notify you", "We'll notify",
   "Date and time will be announced", "date and time will be announced",
   "Date to be announced", "Time to be announced", "Duration to be announced",
   'value: "To be announced"', '"TBA"', "When is the next session?", "will be announced",
@@ -219,7 +229,9 @@ assertIncludes(verifyRoute, "confirmPayment(", "capture verification endpoint");
 assertIncludes(webhookRoute, "verifyWebhookSignature(", "webhook authenticity");
 assertIncludes(webhookRoute, "payment.captured", "webhook events");
 assertIncludes(registrations, "writes.get(r.paymentId)", "idempotent registration writes");
-assertExcludes(registrations, "script.google.com", "sheet deployment URL must be configuration, not source");
+assertIncludes(registrations, "export const GOOGLE_SHEET_WEBAPP_URL =", "sheet URL is a server-side constant");
+assertExcludes(form, "script.google.com", "the browser never posts to the sheet directly");
+assertExcludes(course, "script.google.com", "sheet URL stays out of client-imported config");
 assertIncludes(await source("scripts/google-sheet-webapp.gs"), "'duplicate'", "sheet-side payment id upsert");
 assertIncludes(tracking, "eventID: paymentId", "deduplicated purchase conversion");
 assertIncludes(responseSource, "trackVerifiedPurchase", "purchase conversion lives on the verified success page");
@@ -277,7 +289,7 @@ assertIncludes(await source("src/lib/calendar.ts"), "classEndAt", "calendar uses
 assertIncludes(course, 'classEndAt: "2026-10-10T21:00:00+05:30"', "confirmed schedule end");
 assertExcludes(form, "trackVerifiedPurchase", "no conversion on click / modal open / unverified callback");
 for (const [name, text] of [["razorpay.ts", razorpay], ["registrations.ts", registrations]]) {
-  assertExcludes(text, "NEXT_PUBLIC_RAZORPAY", `${name}: secrets must never come from NEXT_PUBLIC_ variables`);
+  assertExcludes(text, "NEXT_PUBLIC_RAZORPAY_KEY_SECRET", `${name}: secrets must never come from NEXT_PUBLIC_ variables`);
 }
 assertIncludes(razorpay, "process.env.RAZORPAY_KEY_SECRET", "server-only key secret");
 for (const [name, text] of [["page", page], ["hero", hero], ["form", form], ["course", course]]) {

@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Response } from "@/components/Response";
 
 export const metadata: Metadata = {
-  title: "Payment Confirmation | VLS Law Academy",
+  title: "Registration Confirmation | VLS Law Academy",
   robots: { index: false, follow: false },
 };
 

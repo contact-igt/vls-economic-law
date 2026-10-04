@@ -40,7 +40,12 @@ export function useUtmSource() {
       if (data.utm_source) {
         data.utm_source = SOURCE_ALIASES[data.utm_source.toLowerCase()] || data.utm_source;
       } else if (document.referrer) {
-        data.utm_source = new URL(document.referrer).hostname.replace(/^www\./, "");
+        // An unparseable referrer counts as direct traffic (same as vls-practice), never as a failure.
+        try {
+          data.utm_source = new URL(document.referrer).hostname.replace(/^www\./, "");
+        } catch {
+          data.utm_source = "direct";
+        }
       } else {
         data.utm_source = "direct";
       }
@@ -51,9 +56,14 @@ export function useUtmSource() {
           ? { ...DIRECT }
           : Object.fromEntries(UTM_KEYS.map((k) => [k, data[k] ?? ""]));
 
+      // Per-key write: one blocked key never discards the others.
       for (const key of UTM_KEYS) {
-        if (!window.localStorage.getItem(key)) {
-          window.localStorage.setItem(key, resolved[key] ?? "");
+        try {
+          if (!window.localStorage.getItem(key)) {
+            window.localStorage.setItem(key, resolved[key] ?? "");
+          }
+        } catch {
+          /* storage blocked — skip this key */
         }
       }
     } catch {

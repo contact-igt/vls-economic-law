@@ -12,8 +12,8 @@ export function Countdown() {
   const now = useNow(course.nowMs);
   const { left, days, hours, minutes, seconds } = breakdown(course.startsAtMs, now);
 
-  if (left === 0) {
-    return <p role="status" className="text-[13px] font-bold uppercase tracking-[1.4px] text-vls-gold">The live session has begun — registration is closed.</p>;
+  if (course.isWaitlist || left === 0) {
+    return <p role="status" className="text-[13px] font-bold uppercase tracking-[1.4px] text-vls-gold">Registration for this session is closed — join the waitlist for the next session.</p>;
   }
   const cells = [["Days", days], ["Hours", hours], ["Minutes", minutes], ["Seconds", seconds]] as const;
   return (

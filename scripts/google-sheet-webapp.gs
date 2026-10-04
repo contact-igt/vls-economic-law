@@ -3,8 +3,7 @@
  *
  * Deploy: Apps Script editor → Deploy → New deployment → type "Web app",
  *   execute as "Me", access "Anyone". Copy the /exec URL into
- *   the server-only GOOGLE_SHEET_WEBAPP_URL variable. Optionally set a Script property TOKEN and the same
- *   value as GOOGLE_SHEET_TOKEN so only this site can write rows.
+ *   the GOOGLE_SHEET_WEBAPP_URL constant in src/lib/registrations.ts.
  *
  * The landing page POSTs application/x-www-form-urlencoded with these fields:
  *   name, email, mobile, amount, registered_date, programm_date,
@@ -13,8 +12,10 @@
  *   utm_source, utm_medium, utm_campaign, utm_term, utm_content,
  *   payment_method, currency, paid_at, course_name, cta_source, token
  *
- * Rows are written server-side by the landing page ONLY after Razorpay payment verification.
- * razorpay_payment_id is the idempotency key: a repeat of the same payment id (webhook retry,
+ * Paid rows are written server-side by the landing page ONLY after Razorpay payment verification.
+ * After the registration deadline the page writes waitlist leads instead: payment_status "waitlist",
+ * amount 0 and empty razorpay_* / payment fields. Filter on payment_status to segment them.
+ * razorpay_payment_id is the idempotency key for paid rows: a repeat of the same payment id (webhook retry,
  * verify + webhook race) returns {"result":"duplicate"} and appends nothing.
  *
  * Existing sheets: add the five trailing columns (payment_method, currency, paid_at, course_name, cta_source)

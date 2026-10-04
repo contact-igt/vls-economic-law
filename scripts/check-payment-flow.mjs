@@ -12,7 +12,6 @@ const WEBHOOK_SECRET = "flow_webhook_secret";
 process.env.RAZORPAY_KEY_ID = KEY_ID;
 process.env.RAZORPAY_KEY_SECRET = KEY_SECRET;
 process.env.RAZORPAY_WEBHOOK_SECRET = WEBHOOK_SECRET;
-process.env.GOOGLE_SHEET_WEBAPP_URL = "https://sheet.test/exec";
 
 const DEADLINE = Date.parse("2026-10-10T18:00:00+05:30");
 const realNow = Date.now;
@@ -42,7 +41,7 @@ globalThis.fetch = async (url, init = {}) => {
     const entity = (kind === "orders" ? orders : payments).get(id);
     return entity ? Response.json(entity) : new Response("{}", { status: 404 });
   }
-  if (url === process.env.GOOGLE_SHEET_WEBAPP_URL) {
+  if (url.startsWith("https://script.google.com/macros/")) {
     if (sheetDown) return new Response("{}", { status: 500 });
     const params = new URLSearchParams(init.body);
     const id = params.get("razorpay_payment_id");
@@ -51,13 +50,14 @@ globalThis.fetch = async (url, init = {}) => {
     sheetIds.add(id);
     return Response.json({ result: "success" });
   }
-  calls.backend.push(url);
+  calls.backend.push({ url, body: init.body ? JSON.parse(init.body) : null });
   return Response.json({ ok: true });
 };
 
 const create = await import("../src/app/api/create-order/route.ts");
 const verify = await import("../src/app/api/verify-payment/route.ts");
 const webhook = await import("../src/app/api/razorpay-webhook/route.ts");
+const waitlist = await import("../src/app/api/waitlist/route.ts");
 
 const post = (handler, body, headers = {}) =>
   handler.POST(new Request("http://localhost/api", { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: typeof body === "string" ? body : JSON.stringify(body) }));
@@ -148,6 +148,8 @@ assert.equal(calls.sheet[0].utm_content, "reel-1");
 assert.equal(calls.sheet[0].mobile, "+919876543210");
 assert.equal(calls.sheet[0].payment_method, "upi");
 assert.equal(calls.sheet[0].cta_source, "sticky_mobile");
+assert.equal(calls.sheet[0].razorpay_order_id, order.orderId);
+assert.equal(calls.sheet[0].razorpay_signature, checkout(order, payment).razorpay_signature, "verified checkout signature is recorded");
 
 // 7 + 9. Duplicate webhooks / refresh-style repeat verifies are idempotent: still exactly one row.
 res = await deliver(payment, "payment.captured");
@@ -237,5 +239,34 @@ assert.equal((await (await deliver(payment)).json()).status, "recorded");
 assert.equal((await (await deliver(payment)).json()).status, "duplicate");
 assert.equal(sheetIds.has(payment.id), true);
 
+// Waitlist: refused while paid registration is open; after the deadline it records a lead with no payment.
+reset();
+assert.equal((await post(waitlist, student)).status, 409, "no waitlist while paid registration is open");
+assert.equal(calls.sheet.length, 0);
+setNow(DEADLINE);
+reset();
+const joined = await post(waitlist, { ...student, amount: 1 });
+assert.equal(joined.status, 200);
+assert.equal((await joined.json()).status, "waitlist");
+assert.equal(calls.razorpay.length, 0, "no Razorpay request for a waitlist lead");
+assert.equal(calls.sheet.length, 1);
+const lead = calls.sheet[0];
+assert.equal(lead.payment_status, "waitlist");
+assert.equal(lead.amount, "0", "waitlist leads carry a zero amount (VLS convention)");
+for (const key of ["razorpay_order_id", "razorpay_payment_id", "razorpay_signature", "payment_method", "currency", "paid_at"]) assert.equal(lead[key], "", `waitlist ${key} is empty`);
+assert.equal(lead.email, "test@example.com");
+assert.equal(lead.mobile, "+919876543210");
+assert.equal(lead.page_name, "economic-laws-practice");
+assert.equal(lead.programm_date, "2026-10-10T18:00:00+05:30");
+assert.equal(lead.utm_campaign, "econ-laws");
+assert.equal(calls.backend.length, 1, "waitlist lead also reaches the backend");
+assert.equal(calls.backend[0].body.amount, 0);
+assert.equal(calls.backend[0].body.payment_status, "waitlist");
+assert.equal((await post(create, student)).status, 403, "no order after the deadline");
+assert.equal((await post(waitlist, { ...student, mobile: "123" })).status, 400);
+sheetDown = true;
+assert.equal((await post(waitlist, student)).status, 502, "a failed lead write is reported, never shown as joined");
+sheetDown = false;
+
 Date.now = realNow;
-console.log("Payment flow checks passed: server-derived amount, deadline, signature, capture verification, webhook, idempotency.");
+console.log("Payment flow checks passed: server-derived amount, deadline, signature, capture verification, webhook, idempotency, waitlist.");
