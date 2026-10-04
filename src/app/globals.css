@@ -78,12 +78,6 @@ html {
   scroll-margin-top: 104px;
 }
 
-/* Desktop also carries the slim sticky conversion bar (64px) under the header. */
-@media (min-width: 1024px) {
-  [id] {
-    scroll-margin-top: 168px;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   html {

@@ -27,7 +27,7 @@ export function getCourse(now: number, verifiedPaid: number | null = null) {
   const fullDate = `${programConfig.classDay}, ${date}`;
   const feeText = paid ? `₹${programConfig.fee}` : null;
   const seatsRemaining = getSeatsRemaining(programConfig.seatCap, verifiedPaid);
-  const ctaLabel = paid ? `Secure My Seat — ${feeText}` : "Registration Closed";
+  const ctaLabel = paid ? `Register Now — ${feeText}` : "Registration Closed";
   return {
     name: programConfig.courseName, subtitle: "Procedure & Practice", date, time, duration, fullDate,
     fee: programConfig.fee, feeText, phone: programConfig.phone,
@@ -35,15 +35,16 @@ export function getCourse(now: number, verifiedPaid: number | null = null) {
     startsAtMs: Date.parse(programConfig.classStartAt), nowMs: now,
     registrationMode: paid ? "PAID" : "CLOSED", isPaid: paid, isOpen: open,
     seatsLabel: seatsRemaining === null ? null : `${seatsRemaining} seats remaining`,
-    ctaLabel, ctaLabelWithFee: ctaLabel, compactCtaLabel: paid ? "Enroll Now" : "Registration Closed",
-    stickyDesktop: `${programConfig.classDateShort} · ${programConfig.classDay} · ${programConfig.classTimeShort} IST · ${duration}`.toUpperCase(),
-    stickyCtaLabel: paid ? "Secure Seat" : "Closed",
+    ctaLabel, ctaLabelWithFee: ctaLabel, compactCtaLabel: paid ? "Register Now" : "Registration Closed",
+    stickyCtaLabel: paid ? "Register Now" : "Closed",
     stickyDate: `${programConfig.classDateShort} · ${programConfig.classTimeShort}`.toUpperCase(),
     stickyMeta: `${duration} · ${feeText ?? "Closed"}`.toUpperCase(),
-    formHeading: paid ? "Secure Your Seat" : "Registration Closed", formSubmitLabel: ctaLabel,
+    formHeading: paid ? "Complete Your Registration" : "Registration Closed", formSubmitLabel: ctaLabel,
     eyebrow: paid ? "Registration Open" : "Registration Closed",
     secondaryCtaLabel: "Explore the Curriculum ↓",
-    formBlurb: `${fullDate} · ${time} · ${duration}${feeText ? ` · ${feeText}` : ""}`,
+    sessionHeading: `${programConfig.classDay} · ${date}`,
+    headerDate: `${programConfig.classDateShort} · ${programConfig.classDay.slice(0, 3)}`.toUpperCase(),
+    headerDateFull: `${programConfig.classDateShort} · ${programConfig.classDay.slice(0, 3)} · ${programConfig.classTimeShort} IST`.toUpperCase(),
     bandBlurb: `Live on ${fullDate} · ${time} · ${feeText ?? "Registration closed"}`,
     deadlineNote: "Registration closes when the live session begins.",
     faqSessionAnswer: `${fullDate}, from 6:00 PM to 9:00 PM IST.`,

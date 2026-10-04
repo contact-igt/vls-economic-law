@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./ui/Popup";
-import { CtaNote } from "./CtaNote";
+import { PaymentTrust } from "./PaymentTrust";
 import { useCourse } from "@/components/CourseProvider";
 import { UTM_KEYS, getUtm } from "@/lib/getUtm";
 import { clearDraft, readDraft, saveDraft, saveProof } from "@/lib/paymentStorage";
@@ -249,8 +249,7 @@ export function RegistrationForm({ formId, submitLabel }: { formId: string; subm
         >
           {label}
         </button>
-        <CtaNote className="-mt-1 text-center" />
-        <p className="text-center text-[12px] text-vls-muted">VLS Law Academy · Lawyer-led practical legal training</p>
+        <PaymentTrust />
       </form>
 
       <Popup open={verifying} onClose={() => {}} dismissable={false}>

@@ -50,3 +50,8 @@ npx tsc --noEmit
 ```
 
 All commercial values (date, time, duration, fee, deadline) live in `src/lib/course.ts`.
+
+## Third-party assets
+
+`public/brands/razorpay/badge-light.png` is Razorpay's official merchant badge (from Razorpay's merchant-badge programme), used unmodified.
+The Razorpay name and badge are trademarks of Razorpay and subject to Razorpay's brand terms.

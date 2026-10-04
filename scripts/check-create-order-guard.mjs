@@ -38,7 +38,7 @@ const closed = getCourse(classStart);
 assert.equal(closed.isPaid, false);
 assert.equal(closed.ctaLabel, "Registration Closed");
 assert.equal(closed.feeText, null);
-assert.equal(getCourse(classStart - 1).ctaLabel, "Secure My Seat — ₹499");
+assert.equal(getCourse(classStart - 1).ctaLabel, "Register Now — ₹499");
 Date.now = realNow;
 
 console.log("Create-order guard checks passed: closed registration rejects order creation without calling the provider.");

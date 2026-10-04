@@ -17,7 +17,7 @@ export default async function ErrorPage({ searchParams }: { searchParams: Promis
   const initialNow = Date.now();
   return (
     <CourseProvider initialNow={initialNow}>
-      <Header linkBase="/" />
+      <Header linkBase="/" showCta={false} />
       <main className="flex-1">
         <Response variant="error" reason={reason === "unverified" || reason === "unconfirmed" ? reason : "failed"} />
       </main>

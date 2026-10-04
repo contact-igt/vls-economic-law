@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { MouseEvent, ReactNode } from "react";
+import { scrollToElementId, scrollToRegistration } from "@/lib/registerTarget";
 
 type BaseProps = {
   children: ReactNode;
@@ -10,13 +11,9 @@ type BaseProps = {
 
 function scrollToHash(event: MouseEvent<HTMLAnchorElement>, href: string) {
   if (!href.startsWith("#")) return;
-
-  const target = document.getElementById(href.slice(1));
-  if (!target) return;
-
-  event.preventDefault();
-  history.pushState(null, "", href);
-  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  // "#register-form" means "the registration form": one shared rule picks hero or final form.
+  if (href === "#register-form") scrollToRegistration(event);
+  else scrollToElementId(event, href.slice(1));
 }
 
 export function PrimaryLink({

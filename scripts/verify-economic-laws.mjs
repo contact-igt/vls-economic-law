@@ -100,8 +100,9 @@ assert.equal(
   "18:00",
   "confirmed schedule: start time and registration deadline must be 6:00 PM IST",
 );
-assertIncludes(course, 'ctaLabel = paid ? `Secure My Seat — ${feeText}`', "paid CTA");
-assertIncludes(course, 'compactCtaLabel: paid ? "Enroll Now"', "paid CTA");
+assertIncludes(course, 'ctaLabel = paid ? `Register Now — ${feeText}`', "paid CTA");
+assertIncludes(course, 'compactCtaLabel: paid ? "Register Now"', "paid CTA");
+assertIncludes(course, 'stickyCtaLabel: paid ? "Register Now"', "paid CTA");
 for (const stale of [
   "waitlist", "Waitlist", "Join the Waitlist", "notify you", "We'll notify",
   "Date and time will be announced", "date and time will be announced",
@@ -111,6 +112,8 @@ for (const stale of [
   "Best Economic Laws Course", "#1 Economic Laws", "Master PMLA in 3 Hours", "Become an Economic Laws Expert",
   "Guaranteed", "guaranteed", "originalPrice",
   "NEXT_PUBLIC_RAZORPAY",
+  "Secure My Seat", "Secure Seat", "Enroll Now", "Book Now",
+  "Razorpay Trusted", "Razorpay Verified", "Verified by Razorpay", "Razorpay Certified", "Razorpay Secure Badge",
 ]) {
   assertExcludes(allProductionSource, stale, "forbidden stale/unverified copy");
 }
@@ -240,8 +243,36 @@ assertIncludes(sticky, "useCheckoutOpen", "sticky yields to checkout");
 assertIncludes(sticky, "inert={hidden}", "sticky is inert when hidden");
 assertIncludes(sticky, 'href="#register-form"', "sticky reuses the page registration form");
 assertExcludes(sticky, "/api/", "sticky has no payment logic of its own");
-assertIncludes(sticky, "stickyDesktop", "desktop sticky bar");
-assertIncludes(hero, 'id="hero-cta"', "hero conversion area is observable");
+assertIncludes(sticky, "lg:hidden", "dock is mobile/tablet only — desktop uses the morphing header");
+assertIncludes(sticky, "translate-y-[110%]", "dock slides in/out");
+assertIncludes(sticky, "transition-[translate,opacity]", "dock animates translate + opacity (Tailwind v4 uses the translate property)");
+assertIncludes(sticky, "motion-reduce:transition-none", "dock respects reduced motion");
+assertIncludes(hero, 'id="hero-conversion"', "hero countdown + CTA area is observable");
+assertIncludes(hero, "<Countdown />", "hero keeps the large countdown");
+
+// ONE desktop header surface with two states (no second stacked bar).
+const header = await source("src/components/Header.tsx");
+assertIncludes(header, "useExitedAbove(\"hero-conversion\")", "header morphs from an IntersectionObserver sentinel");
+assertIncludes(header, "function ConversionLayer", "header conversion state");
+assertIncludes(header, "inert={converting}", "inactive header layer is inert");
+assertIncludes(header, "transition-[opacity,translate]", "header layers animate opacity + translate only");
+assertIncludes(header, "inert={!active}", "inactive conversion layer is inert");
+assertIncludes(header, "useNow(course.nowMs)", "header countdown uses the shared clock");
+assertIncludes(header, "breakdown(course.startsAtMs", "header countdown uses the shared target");
+assertIncludes(header, 'grid h-[85px]', "stable header height (no layout shift)");
+assertExcludes(header, "setInterval", "header must not start its own timer");
+assertExcludes(countdown, "setInterval", "hero countdown must not start its own timer");
+const useNowSource = await source("src/lib/useNow.ts");
+assertIncludes(useNowSource, "setInterval(tick, 1000)", "single shared clock");
+assertIncludes(useNowSource, "clearInterval", "shared clock cleans up");
+assert.equal((useNowSource.match(/setInterval/g) || []).length, 1, "exactly one interval in the app clock");
+assertIncludes(await source("src/lib/countdown.ts"), "startsAtMs - nowMs", "countdown is an absolute deadline");
+assertExcludes(sticky, "lg:top-[85px]", "no second stacked desktop bar");
+assertIncludes(await source("src/lib/registerTarget.ts"), "prefers-reduced-motion", "registration scroll respects reduced motion");
+assertIncludes(await source("src/lib/registerTarget.ts"), 'return "register-form"', "registration target id") ;
+assertIncludes(await source("src/components/sections/FinalCta.tsx"), 'id="register-form"', "registration CTA target exists") ;
+assertIncludes(hero, 'id="hero-register-form"', "hero registration target exists");
+
 assertIncludes(await source("src/lib/calendar.ts"), "classEndAt", "calendar uses the configured end time");
 assertIncludes(course, 'classEndAt: "2026-10-10T21:00:00+05:30"', "confirmed schedule end");
 assertExcludes(form, "trackVerifiedPurchase", "no conversion on click / modal open / unverified callback");
@@ -252,6 +283,27 @@ assertIncludes(razorpay, "process.env.RAZORPAY_KEY_SECRET", "server-only key sec
 for (const [name, text] of [["page", page], ["hero", hero], ["form", form], ["course", course]]) {
   assertExcludes(text, "RAZORPAY_KEY_SECRET", `${name}: key secret must stay server-side`);
   assertExcludes(text, "RAZORPAY_WEBHOOK_SECRET", `${name}: webhook secret must stay server-side`);
+}
+
+// Razorpay: official self-hosted badge only, official wording, no invented trust claims.
+const paymentTrust = await source("src/components/PaymentTrust.tsx");
+await access(resolve(root, "public/brands/razorpay/badge-light.png"));
+assertIncludes(paymentTrust, "/brands/razorpay/badge-light.png", "official local Razorpay badge");
+assertIncludes(paymentTrust, "Secure payments powered by Razorpay", "Razorpay wording");
+assertIncludes(paymentTrust, "course.deadlineNote", "deadline note in the payment trust block");
+assertIncludes(form, "<PaymentTrust />", "payment trust in the registration form (hero and final)");
+assertExcludes(form, "Lawyer-led practical legal training", "redundant VLS trust line removed from the form");
+assertExcludes(form, "powered by Razorpay", "form uses the shared PaymentTrust component only");
+const finalCta = await source("src/components/sections/FinalCta.tsx");
+assertIncludes(finalCta, "<RegistrationForm formId=\"final\" />", "final registration retains the form (and its Razorpay trust)");
+assertIncludes(finalCta, "<SessionSummary />", "final CTA states the session details and fee");
+assertIncludes(hero, "<SessionSummary />", "hero card states the session details and fee");
+assertIncludes(course, 'formHeading: paid ? "Complete Your Registration"', "payment card heading");
+assert.equal((await source("src/components/Response.tsx")).includes("StickyConversion"), false, "no purchase dock on status pages");
+for (const status of ["src/app/thank-you/page.tsx", "src/app/error/page.tsx"]) {
+  const text = await source(status);
+  assertIncludes(text, "showCta={false}", `${status}: no Register Now in the header on status pages`);
+  assertExcludes(text, "StickyConversion", `${status}: no purchase dock on status pages`);
 }
 
 // Purchase FAQs.
