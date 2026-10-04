@@ -15,7 +15,7 @@ export const programConfig = {
   pageName: "economic-laws-practice",
   courseName: "Economic Laws & Practice",
   phone: "+919500207811",
-  fee: 499 as number | null,
+  fee: 1 as number | null,
   seatCap: null as number | null,
 };
 
