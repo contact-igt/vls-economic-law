@@ -3,12 +3,12 @@ import { getRegistrationAction, getSeatsRemaining, isRegistrationOpen } from "./
 export const programConfig = {
   sessionStatus: "announced",
   // Paid registration closes here; after it the page collects waitlist leads instead.
-  registrationEndsAt: "2026-10-10T18:00:00+05:30",
-  classStartAt: "2026-10-10T18:00:00+05:30",
-  classEndAt: "2026-10-10T21:00:00+05:30",
+  registrationEndsAt: "2026-10-17T18:00:00+05:30",
+  classStartAt: "2026-10-17T18:00:00+05:30",
+  classEndAt: "2026-10-17T21:00:00+05:30",
   classDay: "Saturday",
-  classDate: "10 October 2026",
-  classDateShort: "10 Oct",
+  classDate: "17 October 2026",
+  classDateShort: "17 Oct",
   classTime: "6:00 PM – 9:00 PM IST",
   classTimeShort: "6–9 PM",
   classDuration: "3 Hours",

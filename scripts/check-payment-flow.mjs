@@ -13,7 +13,7 @@ process.env.RAZORPAY_KEY_ID = KEY_ID;
 process.env.RAZORPAY_KEY_SECRET = KEY_SECRET;
 process.env.RAZORPAY_WEBHOOK_SECRET = WEBHOOK_SECRET;
 
-const DEADLINE = Date.parse("2026-10-10T18:00:00+05:30");
+const DEADLINE = Date.parse("2026-10-17T18:00:00+05:30");
 const realNow = Date.now;
 const setNow = (ms) => { Date.now = () => ms; };
 setNow(Date.parse("2026-10-05T10:00:00+05:30"));
@@ -257,7 +257,7 @@ for (const key of ["razorpay_order_id", "razorpay_payment_id", "razorpay_signatu
 assert.equal(lead.email, "test@example.com");
 assert.equal(lead.mobile, "+919876543210");
 assert.equal(lead.page_name, "economic-laws-practice");
-assert.equal(lead.programm_date, "2026-10-10T18:00:00+05:30");
+assert.equal(lead.programm_date, "2026-10-17T18:00:00+05:30");
 assert.equal(lead.utm_campaign, "econ-laws");
 assert.equal(calls.backend.length, 1, "waitlist lead also reaches the backend");
 assert.equal(calls.backend[0].body.amount, 0);
