@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { breakdown } from "../src/lib/countdown.ts";
 import { getRegistrationAction, getSeatsRemaining, isRegistrationOpen } from "../src/lib/programStatus.ts";
 
-const start = "2026-10-10T18:00:00+05:30";
+const start = "2026-10-17T18:00:00+05:30";
 const before = Date.parse("2026-10-05T00:00:00Z");
 const open = { sessionStatus: "announced", classStartAt: start, fee: 499 };
 const endsAt = "2026-10-08T23:59:00+05:30";

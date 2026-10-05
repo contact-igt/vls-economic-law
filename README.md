@@ -1,7 +1,7 @@
 # Economic Laws & Practice — VLS Law Academy
 
 Landing page and paid-registration experience for the **Economic Laws & Practice** foundation course by
-[VLS Law Academy](https://www.vlslawacademy.com/) — a 3-hour live session on Saturday, 10 October 2026, 6:00 PM – 9:00 PM IST.
+[VLS Law Academy](https://www.vlslawacademy.com/) — a 3-hour live session on Saturday, 17 October 2026, 6:00 PM – 9:00 PM IST.
 Course content is limited to Module 11 of the VLS curriculum.
 
 ## Stack

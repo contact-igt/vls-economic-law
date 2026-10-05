@@ -22,9 +22,9 @@ const body = JSON.stringify({ name: "Guard Test", email: "guard@example.com", mo
 const request = () => POST(new Request("http://localhost/api/create-order", { method: "POST", headers: { "Content-Type": "application/json" }, body }));
 const realNow = Date.now;
 
-// Paid registration closes automatically at registrationEndsAt (10 October 2026, 6:00 PM IST — the class start).
+// Paid registration closes automatically at registrationEndsAt (17 October 2026, 6:00 PM IST — the class start).
 const classStart = Date.parse(programConfig.registrationEndsAt);
-assert.equal(classStart, Date.parse("2026-10-10T12:30:00Z"));
+assert.equal(classStart, Date.parse("2026-10-17T12:30:00Z"));
 for (const now of [classStart, classStart + 1, classStart + 86_400_000]) {
   Date.now = () => now;
   assert.equal(getRegistrationAction(programConfig), "waitlist");

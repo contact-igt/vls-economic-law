@@ -81,9 +81,9 @@ assertIncludes(course, "fee: 499", "commercial configuration");
 assertIncludes(course, 'sessionStatus: "announced"', "commercial configuration");
 assertIncludes(course, "seatCap: null", "no invented seat cap");
 for (const value of [
-  'classStartAt: "2026-10-10T18:00:00+05:30"',
+  'classStartAt: "2026-10-17T18:00:00+05:30"',
   'classDay: "Saturday"',
-  'classDate: "10 October 2026"',
+  'classDate: "17 October 2026"',
   'classTime: "6:00 PM – 9:00 PM IST"',
   'classTimeShort: "6–9 PM"',
   'classDuration: "3 Hours"',
@@ -91,12 +91,12 @@ for (const value of [
   assertIncludes(course, value, "confirmed schedule");
 }
 assert.equal(
-  new Date("2026-10-10T18:00:00+05:30").toLocaleDateString("en-IN", { weekday: "long", timeZone: "Asia/Kolkata" }),
+  new Date("2026-10-17T18:00:00+05:30").toLocaleDateString("en-IN", { weekday: "long", timeZone: "Asia/Kolkata" }),
   "Saturday",
-  "confirmed schedule: 10 October 2026 must be a Saturday",
+  "confirmed schedule: 17 October 2026 must be a Saturday",
 );
 assert.equal(
-  new Date("2026-10-10T18:00:00+05:30").toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }),
+  new Date("2026-10-17T18:00:00+05:30").toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }),
   "18:00",
   "confirmed schedule: start time and registration deadline must be 6:00 PM IST",
 );
@@ -104,7 +104,7 @@ assertIncludes(course, 'ctaLabel = paid ? `Register Now — ${feeText}`', "paid 
 assertIncludes(course, 'compactCtaLabel: paid ? "Register Now"', "paid CTA");
 assertIncludes(course, 'stickyCtaLabel: paid ? "Register Now"', "paid CTA");
 // After the deadline every CTA becomes Join Waitlist and leads go to /api/waitlist (no Razorpay order).
-assertIncludes(course, 'registrationEndsAt: "2026-10-10T18:00:00+05:30"', "registration deadline");
+assertIncludes(course, 'registrationEndsAt: "2026-10-17T18:00:00+05:30"', "registration deadline");
 assertIncludes(course, ': "Join Waitlist";', "waitlist CTA");
 assertIncludes(form, '"/api/waitlist"', "waitlist submission");
 assertIncludes(form, "saveWaitlist(", "waitlist confirmation handed to the Thank You page");
@@ -286,7 +286,7 @@ assertIncludes(await source("src/components/sections/FinalCta.tsx"), 'id="regist
 assertIncludes(hero, 'id="hero-register-form"', "hero registration target exists");
 
 assertIncludes(await source("src/lib/calendar.ts"), "classEndAt", "calendar uses the configured end time");
-assertIncludes(course, 'classEndAt: "2026-10-10T21:00:00+05:30"', "confirmed schedule end");
+assertIncludes(course, 'classEndAt: "2026-10-17T21:00:00+05:30"', "confirmed schedule end");
 assertExcludes(form, "trackVerifiedPurchase", "no conversion on click / modal open / unverified callback");
 for (const [name, text] of [["razorpay.ts", razorpay], ["registrations.ts", registrations]]) {
   assertExcludes(text, "NEXT_PUBLIC_RAZORPAY_KEY_SECRET", `${name}: secrets must never come from NEXT_PUBLIC_ variables`);
